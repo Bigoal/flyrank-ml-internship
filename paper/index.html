@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which pages should a content editor review first? — FlyRank Search Intelligence Capstone</title>
+<meta name="description" content="A ranking model for prioritizing content review, built and validated on the FlyRank ML Internship warehouse.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12181F; --muted:#525C67; --faint:#8A94A0;
+    --paper:#EEF1F2; --panel:#FFFFFF; --line:#CBD3D9;
+    --navy:#10263F; --cyan:#2C9FA3; --coral:#DD6240;
+    --cyan-tint:#E4F2F1; --coral-tint:#FBEAE3; --navy-tint:#E9EEF3;
+    --serif:'Fraunces', 'Iowan Old Style', Georgia, serif;
+    --sans:'IBM Plex Sans', -apple-system, Helvetica, Arial, sans-serif;
+    --mono:'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
+    --measure: 42rem;
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans);
+    font-size:17px; line-height:1.62; -webkit-font-smoothing:antialiased;
+  }
+  a{ color:var(--navy); text-decoration-color:var(--line); text-underline-offset:3px; }
+  a:hover{ text-decoration-color:var(--navy); }
+  .wrap{ max-width:52rem; margin:0 auto; padding:0 1.5rem; }
+  .measure{ max-width:var(--measure); }
+
+  /* ---- masthead ---- */
+  header.masthead{ border-bottom:1px solid var(--line); background:var(--panel); }
+  .masthead-inner{ padding:3.6rem 0 2.6rem; }
+  .kicker{ font-family:var(--mono); font-size:0.8rem; color:var(--muted); margin:0 0 1.1rem; }
+  .kicker span.lane{ color:var(--cyan); }
+  h1.title{
+    font-family:var(--serif); font-optical-sizing:auto; font-weight:600;
+    font-size:clamp(1.9rem, 1.2rem + 2.6vw, 3rem); line-height:1.12; letter-spacing:-0.01em;
+    margin:0 0 1.3rem; max-width:26ch; color:var(--navy);
+  }
+  .byline{ display:flex; flex-wrap:wrap; gap:0.4rem 1.4rem; color:var(--muted); font-size:0.94rem; }
+  .byline strong{ color:var(--ink); font-weight:600; }
+
+  /* ---- section nav ---- */
+  nav.toc{ border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:5; }
+  .toc-scroll{ display:flex; overflow-x:auto; gap:1.6rem; padding:0.85rem 2.2rem 0.85rem 1.5rem; scrollbar-width:none; }
+  .toc-scroll::-webkit-scrollbar{ display:none; }
+  .toc-scroll a{ white-space:nowrap; font-size:0.86rem; color:var(--muted); text-decoration:none; font-weight:500; }
+  .toc-scroll a:hover{ color:var(--navy); }
+
+  main{ padding-bottom:5rem; }
+  section{ padding:3.4rem 0; border-bottom:1px solid var(--line); }
+  section:last-of-type{ border-bottom:none; }
+  .section-head{ display:flex; align-items:baseline; gap:0.9rem; margin-bottom:1.6rem; }
+  .num{ font-family:var(--serif); font-weight:500; font-size:1.05rem; color:var(--cyan); flex:none; }
+  h2{ font-family:var(--serif); font-weight:600; font-size:1.55rem; margin:0; color:var(--navy); letter-spacing:-0.005em; }
+  h3{ font-family:var(--serif); font-weight:600; font-size:1.14rem; margin:1.8rem 0 0.7rem; color:var(--ink); }
+  p{ margin:0 0 1.05rem; max-width:var(--measure); }
+  ul, ol{ margin:0 0 1.05rem; padding-left:1.3rem; max-width:var(--measure); }
+  li{ margin-bottom:0.4rem; }
+  strong{ color:var(--ink); }
+  code, .code{ font-family:var(--mono); font-size:0.86em; background:var(--navy-tint); padding:0.1em 0.35em; border-radius:3px; }
+
+  /* ---- abstract ---- */
+  .abstract{ font-size:1.07rem; }
+  .abstract p{ max-width:var(--measure); }
+
+  /* ---- stat strip ---- */
+  .stats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr)); gap:1.6rem 2rem; margin:2rem 0 0.4rem; padding-top:1.6rem; border-top:1px solid var(--line); }
+  .stat b{ display:block; font-family:var(--serif); font-weight:600; font-size:1.65rem; color:var(--navy); line-height:1.1; }
+  .stat span{ display:block; font-size:0.84rem; color:var(--muted); margin-top:0.3rem; }
+
+  /* ---- callouts ---- */
+  .note{ border-left:3px solid var(--cyan); background:var(--cyan-tint); padding:0.9rem 1.15rem; margin:1.3rem 0; max-width:var(--measure); font-size:0.95rem; }
+  .warn{ border-left:3px solid var(--coral); background:var(--coral-tint); padding:0.9rem 1.15rem; margin:1.3rem 0; max-width:var(--measure); font-size:0.95rem; }
+  .note p, .warn p{ margin:0; }
+  .note p + p, .warn p + p{ margin-top:0.55rem; }
+
+  /* ---- tables ---- */
+  .tbl-wrap{ overflow-x:auto; margin:1.2rem 0 1.6rem; max-width:var(--measure); }
+  table{ border-collapse:collapse; width:100%; font-size:0.92rem; min-width:30rem; }
+  th, td{ text-align:left; padding:0.55rem 0.9rem 0.55rem 0; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th{ font-weight:600; color:var(--muted); font-size:0.8rem; text-transform:none; }
+  td.num-cell, th.num-cell{ text-align:right; padding-right:0.9rem; font-family:var(--mono); font-size:0.87rem; }
+  tr:last-child td{ border-bottom:none; }
+
+  /* ---- figures ---- */
+  figure{ margin:1.8rem 0; max-width:44rem; }
+  figure img{ width:100%; height:auto; display:block; background:var(--panel); border:1px solid var(--line); border-radius:2px; padding:0.6rem; }
+  figcaption{ font-size:0.86rem; color:var(--muted); margin-top:0.6rem; max-width:var(--measure); }
+  figcaption .figlabel{ color:var(--ink); font-weight:600; }
+
+  /* ---- reason codes / queue ---- */
+  .queue-row{ display:grid; grid-template-columns:2.4rem 6rem 1fr auto; gap:0.8rem; align-items:baseline; padding:0.55rem 0; border-bottom:1px solid var(--line); font-size:0.92rem; }
+  .queue-row.head{ font-size:0.78rem; color:var(--muted); font-weight:600; }
+  .queue-row .rank{ font-family:var(--mono); color:var(--faint); }
+  .tag{ font-family:var(--mono); font-size:0.76rem; padding:0.12em 0.45em; border-radius:3px; background:var(--navy-tint); color:var(--navy); white-space:nowrap; }
+  .tag.coral{ background:var(--coral-tint); color:#A0431F; }
+
+  /* ---- refs / footer ---- */
+  .refs{ font-size:0.92rem; color:var(--muted); }
+  .refs a{ color:var(--muted); }
+  footer{ padding:2.6rem 0 4rem; }
+  footer p{ color:var(--muted); font-size:0.88rem; }
+
+  @media (max-width:640px){
+    .masthead-inner{ padding:2.4rem 0 1.8rem; }
+    section{ padding:2.4rem 0; }
+    .queue-row{ grid-template-columns:1.8rem 4.4rem 1fr; }
+    .queue-row .review{ grid-column:1 / -1; padding-left:1.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <p class="kicker">FlyRank ML Internship — Search Intelligence Capstone · Lane 2, <span class="lane">Refresh / Content Opportunity Scoring</span></p>
+    <h1 class="title">Which pages should a content editor review first?</h1>
+    <div class="byline">
+      <span><strong>Bigo</strong> — ML Track Intern, FlyRank AI</span>
+      <span>September 2026</span>
+      <span><a href="https://github.com/Bigoal/flyrank-ml-internship">Repository ↗</a></span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="toc-scroll wrap">
+    <a href="#abstract">Abstract</a>
+    <a href="#intro">Introduction</a>
+    <a href="#data">Data</a>
+    <a href="#method">Methodology</a>
+    <a href="#results">Results</a>
+    <a href="#limits">Limitations</a>
+    <a href="#queue">Recommendations</a>
+    <a href="#repro">Reproducibility</a>
+    <a href="#thanks">Acknowledgments</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <section id="abstract">
+    <div class="section-head"><span class="num">01</span><h2>Abstract</h2></div>
+    <div class="abstract">
+      <p>A content team can only manually review a small slice of its pages each month, so something has to decide which ones come first. This paper builds and tests a ranking for that decision, using the FlyRank Search Intelligence warehouse: monthly organic-search performance for tens of thousands of pages across dozens of client accounts.</p>
+      <p>Six forward-looking features — average position, clicks, organic sessions, search volume, CPC, and a shrinkage-smoothed click-through rate — feed four supervised models (logistic regression, random forest, XGBoost, LightGBM), each compared against a one-line rule: rank pages by smoothed click-through rate. Every comparison is out-of-time, trained on one month and evaluated on later, unseen months, and checked two ways — across the whole dataset at once, and inside each client's own page set, which is the level an editor actually works at.</p>
+      <p>The simple rule wins the level that matters. Judged across the whole dataset, the best model looks competitive with, or ahead of, the rule. Judged inside a client's own pages, the rule ranks better than chance in roughly nine of every ten accounts, while every fitted model sits at essentially a coin flip. The apparent model advantage traces to raw click volume acting as a stand-in for account size — telling large accounts from small ones, not declining pages from stable ones.</p>
+      <p>The share of pages meeting our decline threshold nearly tripled across the three evaluation windows (26% to 73%), so every number here is reported as directional and decision-support, not as a stable forecast.</p>
+      <p>The deliverable is the transparent rule itself, a capped monthly review queue built from it, and the full validation trail — including the negative results — so "simple rule over complex model" is a checkable finding, not an assertion.</p>
+    </div>
+  </section>
+
+  <section id="intro">
+    <div class="section-head"><span class="num">02</span><h2>Introduction</h2></div>
+    <p><strong>The decision this supports.</strong> Once a month, an editor works down a list of pages and decides which ones earn a closer look — a title and snippet pass, a content rewrite, or just a note to keep watching. The list has to come from somewhere. Left implicit, that "somewhere" is whoever happens to notice a page sliding, or a top-line traffic chart that a few large, resilient accounts can hide from view entirely.</p>
+    <p>This paper makes that list explicit: a score, one row per page, ranking which existing pages are most worth a look because their organic search impressions are heading down.</p>
+    <p><strong>What a wrong call costs.</strong> A page flagged that wasn't really declining costs an editor's time. A declining page that never gets flagged goes unreviewed for another month.</p>
+    <p><strong>What this is not.</strong> Nothing here claims to know <em>why</em> a page declines, or how Google ranks anything. The features are observable signals about a page's own recent history — not causal levers, and not evidence about search-engine mechanics. Reviewing a flagged page is worth trying and tracking; it is not a tested treatment.</p>
+  </section>
+
+  <section id="data">
+    <div class="section-head"><span class="num">03</span><h2>Data</h2></div>
+    <p>This work uses the FlyRank ML Internship warehouse (Hugging Face, gated release): <code>fact_content_daily_performance</code> (daily rows, monthly partitions, February through June 2026) and <code>dim_content</code> (<code>search_volume</code>, <code>cpc</code>).</p>
+    <p>Every evaluation compares a <em>decision month</em> — when the score would be produced — against the following <em>outcome month</em>, so features never see the future they're meant to flag.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Period</th><th>Features from</th><th>Label from</th><th class="num-cell">Pages</th><th class="num-cell">Clients</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td>Train</td><td>Feb 2026</td><td>Mar 2026</td><td class="num-cell">145,066</td><td class="num-cell">41</td><td>fit models</td></tr>
+          <tr><td>Dev</td><td>Apr 2026</td><td>May 2026</td><td class="num-cell">194,663</td><td class="num-cell">49</td><td>design &amp; compare</td></tr>
+          <tr><td>Final</td><td>May 2026</td><td>Jun 2026</td><td class="num-cell">237,505</td><td class="num-cell">55</td><td>report</td></tr>
+          <tr><td>Score</td><td>Jun 2026</td><td>— (unknown)</td><td class="num-cell">202,386</td><td class="num-cell">52</td><td>live queue</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Excluded, and why</h3>
+    <ul>
+      <li><strong>Deleted content</strong> (<code>is_deleted</code>) — nothing to decide about.</li>
+      <li><strong>Pages with zero impressions in the decision month</strong> — no baseline to measure a decline against.</li>
+      <li><strong>Pages missing an outcome-month row</strong> — the outcome is unobserved, so the row is dropped rather than filled in. This removed 3.7% of otherwise-visible Train pages, and 0% in Dev and Final; whether those dropped pages genuinely vanished or just have a tracking gap is unknown.</li>
+      <li><strong>Anything that defines the label</strong> — outcome-month impressions and any trend field derived from them are never used as features (see the negative-control check in Methodology). Pseudonymous account and content IDs are used only for grouping and joins.</li>
+    </ul>
+    <div class="note"><p><strong>Public-safe.</strong> No client names, domains, URLs, or search queries appear anywhere in this paper or its source notebook. Client identifiers are relabeled "Client 1…n" in publication order; only aggregate statistics leave the analysis.</p></div>
+  </section>
+
+  <section id="method">
+    <div class="section-head"><span class="num">04</span><h2>Methodology</h2></div>
+    <p><strong>Label.</strong> A page is <em>declining</em> if its outcome-month impressions are at least 20% below its decision-month impressions. A page that falls to zero counts as declining. This is a defined threshold, not a measured harm, and is reported as such throughout.</p>
+    <p><strong>Features (6).</strong> Impression-weighted average position, monthly clicks, monthly organic sessions, search volume, CPC, and <strong>smoothed click-through rate</strong>. Missing values are filled with medians learned from Train only.</p>
+    <p><strong>Smoothed CTR, plainly.</strong> Raw click-through rate is unreliable for low-impression pages — zero clicks out of ten impressions looks identical to zero out of ten thousand. Smoothing pulls each page's CTR toward the dataset-wide average in proportion to how little data it has (equivalent to 50 pseudo-impressions at the reference rate, fit on Train only: 0.33%).</p>
+    <p><strong>Baseline.</strong> Rank pages by smoothed CTR, lowest first. No fitting — fully transparent and auditable by hand.</p>
+    <p><strong>Models.</strong> Logistic regression (scaled), random forest, XGBoost, and LightGBM, all fit on Train only. LightGBM was named the primary model to report against the baseline based on its Dev-period result, before Final was examined — that label is not revisited after seeing Final's numbers, even where another model scores higher there.</p>
+    <h3>Validation design</h3>
+    <ul>
+      <li><strong>Time-aware:</strong> every model is fit on Train (Feb→Mar) and evaluated on two disjoint, later windows it never saw.</li>
+      <li><strong>Client-aware:</strong> pages from one account move together, so all uncertainty intervals come from resampling whole clients, never individual pages.</li>
+      <li><strong>Within-client view:</strong> the question that actually matters — does a score order pages correctly <em>inside one account</em> — is reported separately from the whole-dataset (global) view, which mixes in differences between accounts.</li>
+    </ul>
+    <div class="warn">
+      <p><strong>Final is not a blind test.</strong> The May→June window was inspected during interactive development — including the diagnostic that led to redesigning the baseline — before this notebook was consolidated. No further modeling choice was tuned on it afterward, but it should not be read as a held-out test in the strict sense.</p>
+    </div>
+    <h3>Leakage control</h3>
+    <p>A negative control makes the exclusion rule concrete: adding the label's own source columns (outcome-month impressions, decision-month impressions) back in as features pushes 5-fold cross-validated AUC on Train from <strong>0.615 to 0.960</strong> — confirming why they are never used as inputs, only to construct the label.</p>
+  </section>
+
+  <section id="results">
+    <div class="section-head"><span class="num">05</span><h2>Results</h2></div>
+
+    <p>The ground shifted under every comparison: total impressions grew 47% from Feb to Mar, then fell 12% and 22% in the two following windows, and the share of pages meeting the decline threshold rose in step.</p>
+    <figure>
+      <img src="charts/fig1_regime.svg" alt="Bar and line chart showing total impressions change and decline rate across three monthly periods, moving from +47% growth and 26% decline rate to -22% and 73%.">
+      <figcaption><span class="figlabel">Figure 1.</span> Total impressions change and the share of pages meeting the decline threshold, by period. Because the base rate moves this much, top-of-list hit rates are not comparable across periods — AUC and lift are.</figcaption>
+    </figure>
+
+    <h3>Global view vs. the view that matters</h3>
+    <p>Scored across the whole dataset, LightGBM's Final-period AUC looks ahead of the baseline (0.60 vs. 0.54). But its 95% interval, estimated by resampling whole clients, is wide enough to fully contain the baseline's — this is not a resolved difference. Inside a client's own pages, the picture is not just uncertain, it flips: the baseline holds up (0.62 in Dev, 0.59 in Final) while LightGBM sits at 0.47 and 0.50 — statistically indistinguishable from a coin flip in both periods.</p>
+    <figure>
+      <img src="charts/fig2_global_vs_within.svg" alt="Grouped bar chart comparing global and within-client AUC for the smoothed-CTR baseline and LightGBM, in the Dev and Final periods, with 95% confidence intervals.">
+      <figcaption><span class="figlabel">Figure 2.</span> AUC at the whole-dataset (global) level vs. inside each client's own pages (within-client), with 95% client-resampled intervals. The baseline's within-client bars clear 0.5 in both periods; LightGBM's do not.</figcaption>
+    </figure>
+    <figure>
+      <img src="charts/fig3_within_client_share.svg" alt="Bar chart showing the share of clients where each ranker beats chance: 92% and 88% for the baseline, versus 42% and 52% for LightGBM.">
+      <figcaption><span class="figlabel">Figure 3.</span> Share of clients where the ranker's within-client AUC exceeds 0.5. The baseline clears chance in most accounts; LightGBM does not.</figcaption>
+    </figure>
+
+    <h3>Why the global number is misleading</h3>
+    <p>Permutation importance on the Final period shows LightGBM leans almost entirely on raw monthly clicks — shuffling that one column costs far more accuracy (−0.101 AUC) than shuffling smoothed CTR (−0.022), the feature the baseline is built from entirely. Position, sessions, search volume, and CPC contribute close to nothing on their own.</p>
+    <figure>
+      <img src="charts/fig4_importance.svg" alt="Horizontal bar chart of permutation importance for six features, with raw monthly clicks far ahead of the rest and position and sessions showing negative importance.">
+      <figcaption><span class="figlabel">Figure 4.</span> Permutation importance (AUC drop when a feature is shuffled), Final period. Raw click volume dominates — a plausible stand-in for account size rather than a page-level decline signal.</figcaption>
+    </figure>
+    <p>Raw click counts scale with how large an account is. A model that leans on them can partly separate large accounts from small ones — a real signal at the whole-dataset level — without doing a better job of ranking pages <em>inside</em> any one account. That is exactly the gap between Figure 2's global and within-client bars.</p>
+
+    <h3>Robustness</h3>
+    <p>Two sensitivity checks were run on both Dev and Final: removing clients where at least half the pages fell to zero impressions, and removing the single client each ranker's own top-50 leaned on hardest. The baseline's within-client advantage survives both cuts; LightGBM's global-level result moves around under the same cuts, consistent with an account-composition effect rather than a stable page-level signal. The baseline also holds up similarly whether a page sits on page one or beyond it; LightGBM is weakest specifically for page-two-plus pages (AUC 0.44 in Dev) — the exact group the content-and-intent review below is aimed at.</p>
+  </section>
+
+  <section id="limits">
+    <div class="section-head"><span class="num">06</span><h2>Limitations &amp; honest framing</h2></div>
+    <ul>
+      <li><strong>The base rate is not stable.</strong> The share of declining pages nearly tripled across three windows (26% → 50% → 73%). Every metric here is reported as directional, not as a fixed operating point.</li>
+      <li><strong>A page dropping to zero counts as declining</strong>, and a small number of accounts had most of their pages hit zero in the Final window. This may reflect tracking or integration changes rather than page performance — the data cannot distinguish the two.</li>
+      <li><strong>The signal is modest.</strong> Even the winning within-client AUC (0.59–0.62) is well short of a strong classifier. This is a ranking aid, not a confident predictor.</li>
+      <li><strong><code>dim_content</code> is a single snapshot</strong> — search volume and CPC are not dated to a specific month.</li>
+      <li><strong>Final was not a strictly blind test</strong> (see Methodology); the reported numbers should be read with that in mind.</li>
+      <li><strong>No causal claim.</strong> Nothing here shows that reviewing a flagged page changes its trajectory, and nothing here says anything about how Google ranks pages. Suggested reviews are hypotheses to try and track, not tested treatments.</li>
+    </ul>
+  </section>
+
+  <section id="queue">
+    <div class="section-head"><span class="num">07</span><h2>Ranked recommendations</h2></div>
+    <p><strong>Engine.</strong> The smoothed-CTR rule — the only ranker with a repeatable within-client signal. Pages are ranked <em>inside each client</em>, lowest smoothed CTR first, since that is the level the evidence actually supports.</p>
+    <p><strong>Process.</strong> Score the newest complete month once a month (June 2026 here: 202,386 pages, 52 clients). Work down a combined list built round-robin across clients — every account's #1 first, then every account's #2 — so no single account fills the queue.</p>
+    <div class="stats" style="border-top:none; padding-top:0; margin-top:0.4rem;">
+      <div class="stat"><b>20,214</b><span>pages flagged low-CTR within their own account</span></div>
+      <div class="stat"><b>243 / 257</b><span>top-500 queue: snippet &amp; title review vs. content &amp; intent review</span></div>
+      <div class="stat"><b>48.6%</b><span>of the top-500 queue are page-one pages</span></div>
+    </div>
+    <figure>
+      <img src="charts/fig5_action_mix.svg" alt="Horizontal bar chart showing 243 pages suggested for snippet and title review and 257 for content and intent review, out of the top 500 queue.">
+      <figcaption><span class="figlabel">Figure 5.</span> Suggested review type across the top 500 of the June queue.</figcaption>
+    </figure>
+    <h3>Reason codes describe the page's state — they are not proven causes</h3>
+    <ul>
+      <li><code>ctr_low_in_client</code> — smoothed CTR is in the bottom 10% of that client's own pages.</li>
+      <li><code>position_page_2_plus</code> — average position is worse than 10.</li>
+    </ul>
+    <h3>Suggested review (a hypothesis to test, not a result)</h3>
+    <ul>
+      <li>Page-one position, low CTR → <code>review_snippet_and_title</code>.</li>
+      <li>Position worse than 10 → <code>review_content_and_intent</code>.</li>
+      <li>No position data available → <code>monitor</code>.</li>
+    </ul>
+    <p>A non-consecutive sample from the top of one monthly queue, chosen to show both reason-code combinations (client labels only, no page identifiers):</p>
+    <div class="tbl-wrap">
+      <div class="queue-row head"><span>Rank</span><span>Client</span><span>Reason codes</span><span>Suggested review</span></div>
+      <div class="queue-row"><span class="rank">1</span><span>Client 8</span><span class="review"><span class="tag coral">ctr_low_in_client</span></span><span>review_snippet_and_title</span></div>
+      <div class="queue-row"><span class="rank">4</span><span>Client 13</span><span class="review"><span class="tag coral">ctr_low_in_client</span> <span class="tag">position_page_2_plus</span></span><span>review_content_and_intent</span></div>
+      <div class="queue-row"><span class="rank">5</span><span>Client 2</span><span class="review"><span class="tag coral">ctr_low_in_client</span></span><span>review_snippet_and_title</span></div>
+      <div class="queue-row"><span class="rank">10</span><span>Client 19</span><span class="review"><span class="tag coral">ctr_low_in_client</span> <span class="tag">position_page_2_plus</span></span><span>review_content_and_intent</span></div>
+    </div>
+    <p>The score is a ranking, not a calibrated probability, and the underlying signal is modest — treat the queue as a prioritized starting point, not a verdict.</p>
+  </section>
+
+  <section id="repro">
+    <div class="section-head"><span class="num">08</span><h2>Reproducibility</h2></div>
+    <p>Every number in this paper comes from a single notebook, run top to bottom, with the config, seeds, and period definitions fixed in one place at the top.</p>
+    <ul>
+      <li><strong>Notebook:</strong> <a href="https://github.com/Bigoal/flyrank-ml-internship/blob/main/work/notebooks/capstone.ipynb"><code>work/notebooks/capstone.ipynb</code></a></li>
+      <li><strong>Repository:</strong> <a href="https://github.com/Bigoal/flyrank-ml-internship">github.com/Bigoal/flyrank-ml-internship</a></li>
+      <li><strong>Seed:</strong> 42 &nbsp;·&nbsp; <strong>Decline threshold:</strong> −20% &nbsp;·&nbsp; <strong>CTR smoothing:</strong> k=50</li>
+      <li><strong>Environment:</strong> Python 3.13, pandas 2.2.3, numpy 2.1.3, scikit-learn 1.6.1, LightGBM 4.6.0, DuckDB 1.3.2</li>
+    </ul>
+  </section>
+
+  <section id="thanks">
+    <div class="section-head"><span class="num">09</span><h2>Acknowledgments &amp; data credit</h2></div>
+    <p class="refs">Built on the FlyRank ML Internship dataset — <a href="https://flyrank.ai">flyrank.ai</a>. Thanks to the FlyRank AI ML internship program for the dataset access and the lane structure this work is built on.</p>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <p>Search Intelligence Capstone — Lane 2, Refresh / Content Opportunity Scoring. Observed and directional findings only; no claims about Google's ranking algorithm or causal traffic effects.</p>
+</footer>
+
+</body>
+</html>
