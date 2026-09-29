@@ -1,1 +1,1 @@
-https://github.com/Bigoal/flyrank-ml-internship/blob/9ea0cc01fb156493cba0dc522652a686a2e94fb3/paper/index.html
+https://bigoal.github.io/flyrank-ml-internship/paper/
